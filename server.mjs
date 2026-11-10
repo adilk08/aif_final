@@ -13,7 +13,7 @@ const server=http.createServer((req,res)=>{
     if(err){res.writeHead(404);return res.end('Not found')}
     res.setHeader('Cache-Control','no-store');
     res.setHeader('X-Content-Type-Options','nosniff');
-    res.setHeader('Content-Type',({html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'})[file.split('.').pop()]||'application/octet-stream');
+    res.setHeader('Content-Type',({html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml',png:'image/png',webp:'image/webp',mp3:'audio/mpeg',wav:'audio/wav'})[file.split('.').pop()]||'application/octet-stream');
     res.end(data);
   });
 });

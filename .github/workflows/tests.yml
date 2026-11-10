@@ -29,6 +29,8 @@ jobs:
           node --check server.mjs
           node --check campaign-model.js
           node --check campaign-ui.js
+          node --check campaign-presentation.js
+          node --check assets/voices/manifest.js
       - name: Run game tests
-        run: node --test tests.mjs gameplay-tests.mjs mechanics-tests.mjs campaign-tests.mjs
+        run: node --test tests.mjs gameplay-tests.mjs mechanics-tests.mjs campaign-tests.mjs campaign-presentation-tests.mjs
 
