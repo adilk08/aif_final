@@ -4,6 +4,6 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test tests.mjs gameplay-tests.mjs mechanics-tests.mjs"
+    "test": "node --test tests.mjs gameplay-tests.mjs mechanics-tests.mjs campaign-tests.mjs"
   }
 }

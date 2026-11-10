@@ -27,6 +27,8 @@ jobs:
           node --check mechanics.js
           node --check game.js
           node --check server.mjs
+          node --check campaign-model.js
+          node --check campaign-ui.js
       - name: Run game tests
-        run: node --test tests.mjs gameplay-tests.mjs mechanics-tests.mjs
+        run: node --test tests.mjs gameplay-tests.mjs mechanics-tests.mjs campaign-tests.mjs
 
