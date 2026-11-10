@@ -1,0 +1,25 @@
+# Generated files and local-only data
+.build/
+node_modules/
+coverage/
+*.log
+*.zip
+*.tar
+*.tar.gz
+preview*.png
+.env
+.env.*
+!.env.example
+
+# Publishing has a separate Sites-owned Git checkout
+public-site/
+
+# Supplied coursework and generated submission artifacts
+*.docx
+deliverables/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
