@@ -78,5 +78,101 @@ export const VOICE_MANIFEST={
   "aboard": {
     "src": "assets/voices/aboard.mp3",
     "duration": 4.293
+  },
+  "archiveIntro": {
+    "src": "assets/voices/archiveIntro.mp3",
+    "duration": 5.872
+  },
+  "echo": {
+    "src": "assets/voices/echo.mp3",
+    "duration": 7.211
+  },
+  "archiveLocked": {
+    "src": "assets/voices/archiveLocked.mp3",
+    "duration": 6.512
+  },
+  "archiveReply": {
+    "src": "assets/voices/archiveReply.mp3",
+    "duration": 6.275
+  },
+  "nextSignal": {
+    "src": "assets/voices/nextSignal.mp3",
+    "duration": 9.352
+  },
+  "order": {
+    "src": "assets/voices/order.mp3",
+    "duration": 6.554
+  },
+  "courier": {
+    "src": "assets/voices/courier.mp3",
+    "duration": 6.896
+  },
+  "courierMemory": {
+    "src": "assets/voices/courierMemory.mp3",
+    "duration": 6.939
+  },
+  "supplies": {
+    "src": "assets/voices/supplies.mp3",
+    "duration": 4.464
+  },
+  "ilyaWorkshop": {
+    "src": "assets/voices/ilyaWorkshop.mp3",
+    "duration": 7.643
+  },
+  "ilyaArchiveTrain": {
+    "src": "assets/voices/ilyaArchiveTrain.mp3",
+    "duration": 8.198
+  },
+  "ilyaArchiveSuppress": {
+    "src": "assets/voices/ilyaArchiveSuppress.mp3",
+    "duration": 7.706
+  },
+  "miraMeet": {
+    "src": "assets/voices/miraMeet.mp3",
+    "duration": 9.242
+  },
+  "miraDoubt": {
+    "src": "assets/voices/miraDoubt.mp3",
+    "duration": 4.454
+  },
+  "miraRejoin": {
+    "src": "assets/voices/miraRejoin.mp3",
+    "duration": 5.446
+  },
+  "pump": {
+    "src": "assets/voices/pump.mp3",
+    "duration": 6.319
+  },
+  "water": {
+    "src": "assets/voices/water.mp3",
+    "duration": 8.091
+  },
+  "registerLocked": {
+    "src": "assets/voices/registerLocked.mp3",
+    "duration": 5.317
+  },
+  "register": {
+    "src": "assets/voices/register.mp3",
+    "duration": 7.517
+  },
+  "glass": {
+    "src": "assets/voices/glass.mp3",
+    "duration": 7.024
+  },
+  "archiveBoss": {
+    "src": "assets/voices/archiveBoss.mp3",
+    "duration": 7.167
+  },
+  "archiveArrival": {
+    "src": "assets/voices/archiveArrival.mp3",
+    "duration": 7.28
+  },
+  "miraAboard": {
+    "src": "assets/voices/miraAboard.mp3",
+    "duration": 6.65
+  },
+  "archiveSupplies": {
+    "src": "assets/voices/archiveSupplies.mp3",
+    "duration": 5.104
   }
 };
