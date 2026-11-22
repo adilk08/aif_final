@@ -1,3 +1,4 @@
+import {GARDEN_LINES} from './garden-story.js';
 import {CHAPTER_LINES} from './campaign-story.js';
 // Presentation data has no access to campaign saves or game rules.
 const drawings = {
@@ -32,7 +33,7 @@ export function icon(name, cls=''){return `<svg class="icon ${cls}" viewBox="0 0
 export function routeIcon(alg){const paths={dfs:'M3 3h8v6H6v7h12v5m0-5v-6h5',bfs:'M3 3v9h9v9m0-9h9',ucs:'M3 20V8h8v8h10',astar:'m3 20 6-7 5-2 7-8'};return `<svg class="route-art" viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[alg]}"/><circle cx="3" cy="${alg==='dfs'||alg==='bfs'?3:20}" r="2"/><circle cx="21" cy="${alg==='astar'?3:alg==='bfs'?12:16}" r="2"/></svg>`}
 
 export const LINES={
-  ...CHAPTER_LINES,
+  ...CHAPTER_LINES, ...GARDEN_LINES,
   radio:{speaker:'aria',text:'Не ищи выход. Найди, куда должен прийти поезд.'},
   signal:{speaker:'aria',text:'Сигнал механика — в Медном узле. Я отметила его на карте.'},
   first:{speaker:'aria',text:'Выбери сигнал на карте, затем маршрут. Для первого выхода подойдёт бесплатная разведка.'},
@@ -54,8 +55,8 @@ export const LINES={
   epilogue:{speaker:'ilya',text:'Ариадна закрыла линию после катастрофы. В архиве должны быть записи последнего поезда.'},
   aboard:{speaker:'ilya',text:'Я добрался. Открой вагон. К Диспетчеру мы можем вернуться позже.'},
 };
-export const SPEAKERS={ilya:{name:'Илья',role:'Механик',portrait:'assets/portraits/ilya.png'},mira:{name:'Мира',role:'Архивист · медик',portrait:'assets/portraits/mira.png'},aria:{name:'АРИАДНА',role:'Бортовая связь'}};
-export const VOICE_SCRIPTS=Object.fromEntries(['aria','ilya','mira'].map(speaker=>[speaker,Object.entries(LINES).filter(([,v])=>v.speaker===speaker).map(([id,v])=>({id,text:v.text}))]));
+export const SPEAKERS={lada:{name:'Лада',role:'Дежурная по свету',portrait:'assets/portraits/lada.webp'},driver:{name:'Проводник',role:'Ключ приёма'},ilya:{name:'Илья',role:'Механик',portrait:'assets/portraits/ilya.png'},mira:{name:'Мира',role:'Архивист · медик',portrait:'assets/portraits/mira.png'},aria:{name:'АРИАДНА',role:'Бортовая связь'}};
+export const VOICE_SCRIPTS=Object.fromEntries(Object.keys(SPEAKERS).map(speaker=>[speaker,Object.entries(LINES).filter(([,v])=>v.speaker===speaker).map(([id,v])=>({id,text:v.text}))]));
 
 export class DialogueSession{
   constructor(ids,options){this.frames=ids.map(id=>({id,...LINES[id]}));if(!this.frames.length||this.frames.some(f=>!f.text))throw Error('Unknown dialogue');this.index=0;this.options=options;this.chosen=false}

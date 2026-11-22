@@ -1,4 +1,6 @@
+import {GARDEN_VOICES} from './garden-manifest.js';
 export const VOICE_MANIFEST={
+  ...GARDEN_VOICES,
   "radio": {
     "src": "assets/voices/radio.mp3",
     "duration": 3.525

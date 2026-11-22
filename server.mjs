@@ -13,9 +13,9 @@ const server=http.createServer((req,res)=>{
     if(err){res.writeHead(404);return res.end('Not found')}
     res.setHeader('Cache-Control','no-store');
     res.setHeader('X-Content-Type-Options','nosniff');
-    res.setHeader('Content-Type',({html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml',png:'image/png',webp:'image/webp',mp3:'audio/mpeg',wav:'audio/wav'})[file.split('.').pop()]||'application/octet-stream');
+    res.setHeader('Content-Type',({html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml',png:'image/png',webp:'image/webp',ttf:'font/ttf',mp4:'video/mp4',mp3:'audio/mpeg',wav:'audio/wav'})[file.split('.').pop()]||'application/octet-stream');
     res.end(data);
   });
 });
 server.on('error',e=>{if(e.code==='EADDRINUSE'){console.log('Сервер уже работает: http://127.0.0.1:4173');open();return}console.error('Не удалось запустить сервер:',e.message);process.exitCode=1;});
-server.listen(port,'127.0.0.1',()=>{console.log('NEON LABYRINTH: http://127.0.0.1:4173');console.log('Закройте окно или нажмите Ctrl+C для остановки.');open()});
+server.listen(port,'127.0.0.1',()=>{console.log('Забытый комплекс: http://127.0.0.1:4173');console.log('Закройте окно или нажмите Ctrl+C для остановки.');open()});

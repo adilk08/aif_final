@@ -1,2 +1,43 @@
-<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="favicon.svg"><title>NEON // LABYRINTH</title><link rel="stylesheet" href="style.css"><body><canvas id="world"></canvas><div id="vignette"></div><button id="devBtn" title="Режим разработчика · F2">DEV · F2</button><header><a id="brand">N<span> / </span>L<span class="small">PROTOCOL 09</span></a><div id="hud"></div><nav><button id="mapBtn">M · КАРТА</button><button id="aiBtn">AI · АНАЛИЗ</button><button id="pauseBtn">ESC · ПАУЗА</button></nav></header><aside id="mission"></aside><div id="toast" aria-live="polite"></div><div id="loss" aria-live="polite"></div><div id="interact"></div><footer><span>WASD / ↑↓←→ <i>ходить</i>　 M <i>маршруты</i>　 E <i>взаимодействие</i>　 Space <i>стоп</i>　 Q <i>зелье</i></span><span id="coords">СИГНАЛ СТАБИЛЕН ●</span></footer><section id="overlay"></section><section id="combat" hidden></section><section id="drawer" hidden></section><section id="devPanel" role="dialog" aria-label="Режим разработчика" hidden></section><script type="module" src="game.js"></script></body></html>
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="favicon.svg"><title>Забытый комплекс</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="guide.css"><link rel="stylesheet" href="sector.css"><link rel="stylesheet" href="instrument.css"><script type="module" src="game-guide.js"></script><script type="module" src="menu-sign.js"></script><script type="module" src="menu-audio.js"></script><script type="module" src="screen-toggle.js"></script><body class="classic-game">
+<template id="title-template">
+  <div class="title-screen">
+    <video id="alley-film" class="title-film" muted loop playsinline preload="none" poster="assets/menu/thread-wall.webp" aria-hidden="true"></video>
+    <div class="menu-preferences">
+      <div class="language-switch" role="group" aria-label="Язык" data-ui>
+        <button type="button" data-language="ru" lang="ru" aria-label="Русский">РУС</button>
+        <button type="button" data-language="kk" lang="kk" aria-label="Қазақша">ҚАЗ</button>
+        <button type="button" data-language="en" lang="en" aria-label="English">ENG</button>
+      </div>
+      <screen-toggle></screen-toggle>
+      <menu-audio><button type="button" aria-label="Включить звук меню" class="menu-sound"><i aria-hidden="true">♪</i></button></menu-audio>
+    </div>
+    <div class="title-content">
+      <div id="title-home">
+        <div class="title-paint">
+          <h1 lang="ru" aria-label="Забытый комплекс"><neon-sign>Забытый комплекс</neon-sign></h1>
+        </div>
+        <nav class="title-actions" aria-label="Режим игры">
+          <a class="street-action featured" href="campaign.html">Кампания</a>
+          <button class="street-action" id="classic">Классический забег</button>
+          <button class="street-action" id="resume" hidden>Продолжить забег</button>
+        </nav>
+      </div>
+      <form id="classic-setup" class="classic-setup" hidden>
+        <button class="title-back" id="setup-back" type="button">‹ &nbsp; В меню</button>
+        <h2 data-ui>Классический забег</h2>
+        <label for="seed">Код лабиринта</label><input id="seed" maxlength="32" autocomplete="off" spellcheck="false">
+        <label for="size">Размер карты</label><select id="size"><option value="21">Компактная · 21 × 21</option><option value="25" selected>Стандартная · 25 × 25</option><option value="31">Большая · 31 × 31</option></select>
+        <label for="difficulty">Сложность</label><select id="difficulty"><option value="2">Исследователь</option><option value="4" selected>Тактик</option><option value="6">Эксперт</option></select>
+        <button class="street-action featured" id="start" type="submit">Начать забег</button>
+      </form>
+      <div class="title-tools"><button id="help" class="street-action">Как играть</button></div>
+    </div>
+      <section id="menu-guide" class="field-guide" aria-labelledby="guide-title" hidden>
+        <button class="title-back" id="guide-back" type="button">‹ &nbsp; Назад</button>
+        <h2 data-ui id="guide-title">Как играть</h2>
+        <game-guide></game-guide>
+      </section>
+  </div>
+</template>
+<canvas id="world"></canvas><div id="vignette"></div><button id="devBtn" title="Режим разработчика · F2">DEV · F2</button><header><a id="brand">З<span> / </span>К<span class="small">ЗАБЫТЫЙ КОМПЛЕКС</span></a><div id="hud"></div><nav><screen-toggle></screen-toggle><button id="mapBtn">M · КАРТА</button><button id="aiBtn">AI · АНАЛИЗ</button><button id="pauseBtn">ESC · ПАУЗА</button></nav></header><aside id="mission"></aside><div id="toast" aria-live="polite"></div><div id="loss" aria-live="polite"></div><div id="interact"></div><footer><span>WASD / ↑↓←→ <i>ходить</i>　 M <i>маршруты</i>　 E <i>взаимодействие</i>　 Space <i>стоп</i>　 Q <i>зелье</i></span><span id="coords">СИГНАЛ СТАБИЛЕН ●</span></footer><section id="overlay"></section><duel-view id="classic-duel"></duel-view><section id="combat" hidden></section><section id="drawer" hidden></section><section id="devPanel" role="dialog" aria-label="Режим разработчика" hidden></section><script type="module" src="game.js"></script></body></html>
 

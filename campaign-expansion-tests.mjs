@@ -99,3 +99,41 @@ test('archive event choices and reload preserve the original paid route',()=>{
   for(let i=0;i<500&&!c.choice&&!c.battle;i++)c.tick();assert.ok(c.choice);const path=[...c.route],coins=c.player.coins;
   const n=Campaign.load(c.save());assert.equal(n.tick(),false);assert.deepEqual(n.route,path);n.resolve(n.choice.type==='archivist'?'meet':'close');if(path.length){n.tick();assert.equal(n.position,path[0]);assert.equal(n.route.length,path.length-1)}assert.equal(n.player.coins,coins);
 });
+
+
+test('gardens unlock from a version 2 archive save; eight branch combinations reach boarding through the real routes',()=>{
+  assert.equal(new Campaign().depart('gardens'),false);
+  for(const power of ['train','suppress'])for(const water of ['seal','drain'])for(const keeper of ['lada','driver']){
+    const start=prepared(power);
+    start.depart('archive');Object.assign(start.flags,{met:true,pumps:['pump-west','pump-east'],water,record:true,boss:true,rescued:true});start.returnHome();
+    let c=Campaign.load(start.save());
+    assert.ok(c.depart('gardens'));
+    assert.equal(c.map.cells[(water==='drain'?12:9)*25+15],1);
+    for(const o of c.objects)assert.ok(search(c.map,26,o.id,'bfs').path.length);
+    assert.equal(c.move(27),false);
+    walk(c,'lada','meet');walk(c,'lamps','cold');
+    walk(c,'fan','listen');walk(c,'key',keeper);
+    walk(c,'tomato',keeper==='lada'?'share':'seeds');
+    walk(c,'boxes','read');walk(c,'garden-meds','supplies');
+    if(power==='suppress'){assert.equal(c.bossReady(),false);walk(c,'lamps','warm');}
+    assert.ok(c.bossReady());
+    if(!c.flags.boss)walk(c,'gardener','attack');
+    walk(c,'gardener','call');
+    assert.ok(c.flags.boarding.length);assert.ok(c.tick());c=Campaign.load(c.save());
+    while(!c.choice)c.tick();
+    assert.equal(c.flags.trainPosition,c.position);
+    assert.equal(c.resolve('close'),false);
+    assert.ok(c.resolve('board'));assert.ok(c.completed('gardens'));assert.equal(c.fragments,3);assert.equal(c.passengers,8);
+    const balance=c.player.coins;c.depart('gardens');c.returnHome();assert.equal(c.player.coins,balance);assert.equal(c.unlocked('repeat'),false);
+  }
+});
+
+test('guard and pierce interrupt the Gardener boom, attack lets it land',()=>{
+  for(const action of ['guard','pierce','attack']){
+    const c=new Campaign();c.chapter='gardens';c.startBattle({type:'boss',key:'gardener'});
+    c.battle.s[1].boomCycle=2;c.plan();assert.equal(c.battle.intent,'boom');
+    const hp=c.player.hp;assert.ok(c.playerAct(action));assert.ok(c.enemyAct());
+    assert.equal(c.player.hp<hp,action==='attack');
+    assert.equal(c.battle.s[1].boomCycle,0);
+  }
+});

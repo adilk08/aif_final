@@ -1,3 +1,4 @@
+import {gardenObjective,inheritGardenRoutes,resolveGarden,tickGardenTrain} from './garden-district.js';
 import {search,vision,choose,step,actions} from './engine.js';
 import {RELICS,navigationMap,routeForecast} from './mechanics.js';
 import {DISTRICTS,DISTRICT_FIELDS,UPGRADES,EVIDENCE,makeDistrict,addOptionalSignals} from './campaign-content.js';
@@ -15,13 +16,14 @@ export class Campaign {
   flagsOf(id){return id===this.chapter?this.flags:this.districts[id]?.flags}
   completed(id){return !!this.flagsOf(id)?.complete}
   get fragments(){return Object.keys(DISTRICTS).filter(id=>this.completed(id)).length}
-  get passengers(){return Object.keys(DISTRICTS).filter(id=>this.flagsOf(id)?.rescued).length}
-  unlocked(id){return id==='copper'||id==='archive'&&this.completed('copper')}
+  get passengers(){return Object.keys(DISTRICTS).reduce((n,id)=>n+(this.flagsOf(id)?.rescued?(id==='gardens'?6:1):0),0)}
+  unlocked(id){return id==='copper'||id==='archive'&&this.completed('copper')||id==='gardens'&&this.completed('archive')}
   snapshot(){return Object.fromEntries(DISTRICT_FIELDS.map(k=>[k,structuredClone(this[k])]))}
   reveal(expand=false){this.visible=vision(this.map,this.position%25+.5,Math.floor(this.position/25)+.5);if(expand)for(const id of this.visible)this.explored[id]=true;this.visible=this.visible.filter(id=>this.explored[id])}
-  active(o){return !this.done.includes(o.key)&&!(['mechanic','archivist'].includes(o.type)&&(this.flags.rescued||this.companion!==null))&&!(o.type==='anchor'&&this.flags.anchor&&this.flags.anchor!==o.key)}
+  active(o){if(this.chapter==='gardens'&&o.key==='gardener'&&this.flags.boss)return !this.flags.complete;return !this.done.includes(o.key)&&!(['mechanic','archivist'].includes(o.type)&&(this.flags.rescued||this.companion!==null))&&!(o.type==='anchor'&&this.flags.anchor&&this.flags.anchor!==o.key)}
   objectAt(){return this.objects.find(o=>o.id===this.position&&this.active(o))}
   objective(){
+    if(this.chapter==='gardens')return gardenObjective(this);
     if(this.flags.complete)return this.chapter==='copper'?'Исследовать побочные сигналы или отправиться в Архив.':'Архив пройден. Исследовать оставшиеся сигналы.';
     if(!this.flags.met)return this.chapter==='archive'?'Найти Миру':'Найти Илью';
     if(this.chapter==='archive'){
@@ -42,14 +44,14 @@ export class Campaign {
   addEvidence(id){if(!EVIDENCE[id]||this.evidence.includes(id))return false;this.evidence.push(id);this.log('Находка: '+EVIDENCE[id].title+'. '+EVIDENCE[id].text);return true}
   depart(id=this.chapter){
     if(this.area!=='train'||this.choice||this.battle||!this.unlocked(id))return false;
-    if(id!==this.chapter){this.districts[this.chapter]=this.snapshot();const state=this.districts[id]||makeDistrict(id);delete this.districts[id];this.chapter=id;Object.assign(this,state);this.reveal(!this.explored.some(Boolean))}
+    if(id!==this.chapter){this.districts[this.chapter]=this.snapshot();const firstVisit=!this.districts[id];const state=this.districts[id]||makeDistrict(id);delete this.districts[id];this.chapter=id;Object.assign(this,state);if(id==='gardens'&&firstVisit)inheritGardenRoutes(this);this.reveal(!this.explored.some(Boolean))}
     this.area=id;this.choice=null;this.player.hp=this.player.max;this.player.energy=3;this.position=26;this.route=[];this.routeGoal=null;this.reveal(false);
     this.log('Экспедиция: '+this.district.name+'. Разведка и решения сохраняются.');return true;
   }
   preview(id,alg){if(!Number.isInteger(id)||!this.map.cells[id]||(!this.explored[id]&&!this.objects.some(o=>o.id===id&&this.active(o))))return null;const r=search(navigationMap(this.map,this.visited,this.player.passives),this.position,id,alg);return {...r,...routeForecast(this.map,r.path,this.visited,this.player)}}
-  travel(id,alg){if(this.area==='train'||this.battle||this.choice)return false;const price={dfs:0,bfs:2,ucs:3,astar:3}[alg],r=this.preview(id,alg);if(price===undefined||!r||r.path.length<2||this.player.coins<price)return false;this.player.coins-=price;this.route=r.path.slice(1);this.routeGoal=id;this.stats.launches++;return true}
+  travel(id,alg){if(this.area==='train'||this.battle||this.choice||this.flags.boarding)return false;const price={dfs:0,bfs:2,ucs:3,astar:3}[alg],r=this.preview(id,alg);if(price===undefined||!r||r.path.length<2||this.player.coins<price)return false;this.player.coins-=price;this.route=r.path.slice(1);this.routeGoal=id;this.routeAlgorithm=alg;this.stats.launches++;return true}
   move(id,algorithm=false){
-    if(this.area==='train'||this.battle||this.choice||!this.map.cells[id])return false;
+    if(this.area==='train'||this.battle||this.choice||this.flags.boarding||!this.map.cells[id])return false;
     const x=this.position%25,y=Math.floor(this.position/25);
     if(Math.abs(id%25-x)+Math.abs(Math.floor(id/25)-y)!==1||!algorithm&&(!this.firstRoute||!this.explored[id]))return false;
     if(!algorithm){this.route=[];this.routeGoal=null}const old=this.position;this.position=id;if(algorithm)this.firstRoute=true;this.stats.steps++;
@@ -57,18 +59,20 @@ export class Campaign {
     if(!this.visited[id]&&algorithm){const loss=Math.min(Math.max(0,this.player.hp-10),this.map.cells[id]*.6*(this.player.passives.scout?.65:1));this.player.hp-=loss;this.stats.loss+=loss}
     if(algorithm)this.visited[id]=true;this.reveal(algorithm);return true;
   }
-  tick(){if(!this.route.length||this.choice||this.battle)return false;const next=this.route.shift();if(!this.move(next,true)){this.route=[];return false}const o=this.objectAt();if(o){this.interact(o.key);return true}if(!this.route.length)this.log('Цель достигнута.');return true}
-  bossReady(){return this.chapter==='copper'?!!(this.flags.power&&this.flags.anchor):!!(this.flags.water&&this.flags.record)}
+  tick(){if(!this.battle&&!this.choice&&this.chapter==='gardens'&&this.area==='gardens'&&tickGardenTrain(this))return true;if(!this.route.length||this.choice||this.battle)return false;const next=this.route.shift();if(!this.move(next,true)){this.route=[];return false}const o=this.objectAt();if(o){this.interact(o.key);return true}if(!this.route.length)this.log('Цель достигнута.');return true}
+  bossReady(){if(this.chapter==='gardens')return !!(this.flags.keeper&&(this.flags.light==='warm'||this.flagsOf('copper')?.power==='train'));return this.chapter==='copper'?!!(this.flags.power&&this.flags.anchor):!!(this.flags.water&&this.flags.record)}
   interact(key){
     if(this.area==='train'||this.battle||this.choice)return false;
     const o=this.objects.find(o=>o.key===key&&o.id===this.position&&this.active(o));if(!o)return false;
+    if(this.flags.boarding)return false;
+    if(this.chapter==='gardens'&&o.key==='gardener'&&this.flags.boss){this.choice={type:'dispatch'};return true}
     if(o.type==='enemy'||o.type==='boss'){if(o.type==='boss'&&!this.bossReady()){this.choice={type:'locked'};return true}this.startBattle(o);return true}
     this.choice={type:o.type,key:o.key};return true;
   }
   resolve(action){
     const c=this.choice;if(!c)return false;let ok=true;
-    if(action==='close'&&c.type!=='loot'){this.choice=null;return true}
-    if(c.type==='mechanic'){
+    if(action==='close'&&!['loot','boarding'].includes(c.type)){this.choice=null;return true}
+    if(this.chapter==='gardens'&&['operator','switch','fan','relay','tomato','dispatch','boarding'].includes(c.type)){ok=resolveGarden(this,action)}else if(c.type==='mechanic'){
       if(action!=='meet')return false;this.flags.met=true;this.player.passives.scout=true;
       if(this.flags.anchor&&!this.flags.rescued){this.companion=this.position;this.log('Илья снова следует за вами.')}else this.log('Получен Разведчик. Илья ждёт установки якоря.');
     }else if(c.type==='anchor'){
@@ -98,7 +102,7 @@ export class Campaign {
     }else if(c.type==='record'){
       if(action!=='read'||this.done.includes(c.key))return false;
       if(c.key==='register'&&!this.flags.water)return false;
-      const id={order:'copperOrder',register:'archiveConsent',echo:'archiveEcho',glass:'archiveGlass'}[c.key];if(!id)return false;
+      const id={boxes:'gardenBoxes',order:'copperOrder',register:'archiveConsent',echo:'archiveEcho',glass:'archiveGlass'}[c.key];if(!id)return false;
       this.addEvidence(id);this.done.push(c.key);this.player.coins+=4;
       if(c.key==='register')this.flags.record=true;
     }else if(c.type==='cache'){
@@ -125,6 +129,7 @@ export class Campaign {
       if(this.chapter==='copper'&&this.flags.power==='train')this.player.atk+=3;
       this.player.coins+=12;
       this.log(this.district.name+' завершён. +12 CR на улучшения. Фрагмент адреса '+this.fragments+'/4.');
+      if(this.chapter==='gardens')this.log('Посадка завершена. Лада и ещё пять человек в вагоне.');
       if(this.chapter==='archive')this.log('Второй фрагмент — время прибытия. Оно совпадает со временем катастрофы. АРИАДНА: «Теперь вы понимаете, почему я просила не торопиться».');
     }
     this.reveal(false);
@@ -138,7 +143,7 @@ export class Campaign {
   }
   resupply(){if(this.area!=='train'||!this.flagsOf('copper')?.rescued||this.player.coins<4)return false;this.player.coins-=4;this.player.potions++;return true}
   drink(){if(this.area==='train'||this.battle||this.choice||this.player.potions<1||this.player.hp>=this.player.max)return false;this.player.potions--;this.player.hp=Math.min(this.player.max,this.player.hp+25);return true}
-  get supportAvailable(){return this.chapter==='archive'&&!!this.flagsOf('copper')?.rescued&&!this.supportUsed&&!!this.battle&&!this.battle.pending}
+  get supportAvailable(){return this.chapter!=='copper'&&!!this.flagsOf('copper')?.rescued&&!this.supportUsed&&!!this.battle&&!this.battle.pending}
   support(){
     if(!this.supportAvailable)return false;const p=this.battle.s[0];this.supportUsed=true;
     if(this.flagsOf('copper')?.power==='suppress'){p.guard=true;p.energy=Math.min(3,p.energy+1);this.battle.log.push('Илья: помеха включена. Щит и +1 энергия.');}
@@ -148,18 +153,22 @@ export class Campaign {
   startBattle(o){
     const boss=o.type==='boss',archive=this.chapter==='archive',weak=boss&&(archive?this.flags.water==='seal':this.flags.power==='suppress');
     const role=boss?'boss':['sentinel','berserker','technician'][o.kind];
-    const hp=boss?(archive?(weak?86:106):(weak?64:84)):(archive?[42,40,44]:[30,28,30])[o.kind];
+    const hp=this.chapter==='gardens'?(boss?100:[44,42,46][o.kind]):boss?(archive?(weak?86:106):(weak?64:84)):(archive?[42,40,44]:[30,28,30])[o.kind];
     const e={hp,max:hp,atk:boss?(archive?(weak?11:12):(weak?9:11)):(archive?[10,12,10]:[8,10,8])[o.kind],armor:boss?(weak?0:3):[3,1,1][o.kind],energy:2,potions:0,guard:false,boss,role,phase2:false};
+    if(boss&&this.chapter==='gardens'){e.atk=12;e.armor=3;e.boomCycle=0;}
     this.battle={key:o.key,boss,s:[{...structuredClone(this.player),guard:false,shieldUsed:false},e],pending:false,intent:null,log:['Контакт: '+(boss?this.district.boss:'охранный дрон')]};this.plan();
   }
-  plan(){if(this.battle){const r=choose(this.battle.s,4,true,true);this.battle.intent=r.action;this.battle.metrics={nodes:r.nodes,cuts:r.cuts}}}
+  plan(){if(this.battle){const r=choose(this.battle.s,4,true,true);this.battle.intent=r.action;if(this.battle.key==='gardener'&&this.battle.s[1].boomCycle===2)this.battle.intent='boom';this.battle.metrics={nodes:r.nodes,cuts:r.cuts}}}
   sync(){for(const k of ['hp','energy','potions'])this.player[k]=this.battle.s[0][k]}
-  playerAct(a){const b=this.battle;if(!b||b.pending||!actions(b.s,0).includes(a))return false;b.s=step(b.s,0,a);b.log.push('Вы: '+a+(b.s.damage?' · '+b.s.damage:'')+(b.s.interrupted?' · ремонт прерван':''));this.sync();if(b.s[1].hp<=0)this.victory();else b.pending=true;return true}
+  playerAct(a){const b=this.battle;if(!b||b.pending||!actions(b.s,0).includes(a))return false;b.s=step(b.s,0,a);if(b.intent==='boom'&&['guard','pierce'].includes(a)){b.intent='stalled';b.log.push('Стрела остановлена.');}b.log.push('Вы: '+a+(b.s.damage?' · '+b.s.damage:'')+(b.s.interrupted?' · ремонт прерван':''));this.sync();if(b.s[1].hp<=0)this.victory();else b.pending=true;return true}
   enemyAct(){
-    const b=this.battle;if(!b||!b.pending)return false;b.s=step(b.s,1,b.intent);b.log.push('Враг: '+b.intent+(b.s.damage?' · '+b.s.damage:''));this.sync();
+    const b=this.battle;if(!b||!b.pending)return false;if(b.intent==='boom'){
+      const enemy=b.s[1],base=enemy.atk;enemy.atk+=9;b.s=step(b.s,1,'attack');b.s[1].atk=base;
+    }else if(b.intent==='stalled'){b.s.damage=0}else b.s=step(b.s,1,b.intent);
+    if(b.key==='gardener')b.s[1].boomCycle=(b.s[1].boomCycle+1)%3;b.log.push('Враг: '+b.intent+(b.s.damage?' · '+b.s.damage:''));this.sync();
     if(this.player.hp<=0){this.stats.deaths++;this.player.hp=this.player.max;this.player.coins=Math.max(0,this.player.coins-8);this.player.potions=Math.max(this.flagsOf('archive')?.rescued?2:1,this.player.potions);this.player.energy=3;this.battle=null;this.route=[];this.area='train';this.position=26;this.companion=null;this.supportUsed=false;this.choice={type:'defeat'};this.log('Аварийная эвакуация. Потеряно до 8 CR; задачи и разведка сохранены.');this.reveal(false)}else{b.pending=false;this.plan()}return true;
   }
-  victory(){const b=this.battle;if(!b||this.done.includes(b.key))return;this.done.push(b.key);this.player.coins+=8;this.player.hp=Math.min(this.player.max,this.player.hp+8);this.player.energy=3;if(b.boss){this.flags.boss=true;this.log(this.chapter==='copper'?'Диспетчер отключён. АРИАДНА: «Вы открыли линию, которую я закрыла ради вас».':'Смотритель отключён. На ленте два приказа АРИАДНЫ: «Не выпускать» и «Не впускать». Оба адресованы одному поезду.');}this.battle=null;this.choice={type:'loot',boss:b.boss};this.log('Победа. +8 CR, восстановлено до 8 HP. Выберите трофей.')}
+  victory(){const b=this.battle;if(!b||this.done.includes(b.key))return;this.done.push(b.key);this.player.coins+=8;this.player.hp=Math.min(this.player.max,this.player.hp+8);this.player.energy=3;if(b.boss){this.flags.boss=true;this.log(this.chapter==='gardens'?'Стрела сложена. Подайте настоящий сигнал прямо с посадочной.':this.chapter==='copper'?'Диспетчер отключён. АРИАДНА: «Вы открыли линию, которую я закрыла ради вас».':'Смотритель отключён. На ленте два приказа АРИАДНЫ: «Не выпускать» и «Не впускать». Оба адресованы одному поезду.');}this.battle=null;this.choice={type:'loot',boss:b.boss};this.log('Победа. +8 CR, восстановлено до 8 HP. Выберите трофей.')}
   save(){const s=structuredClone(this);delete s.visible;return JSON.stringify(s)}
   static load(raw){
     const s=JSON.parse(raw);if(!s||![1,2].includes(s.version))throw Error('Несовместимое сохранение кампании');
@@ -172,10 +181,15 @@ export class Campaign {
     for(const [id,state] of Object.entries(s.districts)){if(!DISTRICTS[id]||id===s.chapter)throw Error('Поврежден район');validateDistrict(state,id)}
     if(!s.player||!['hp','max','atk','armor','energy','potions','coins'].every(k=>Number.isFinite(s.player[k]))||s.player.hp<=0||s.player.hp>s.player.max||s.player.max<1||s.player.atk<0||s.player.armor<0||s.player.energy<0||s.player.energy>3||s.player.coins<0||s.player.potions<0||!s.player.passives||!Array.isArray(s.notes)||s.notes.some(n=>typeof n!=='string')||!Array.isArray(s.evidence)||s.evidence.some(id=>!EVIDENCE[id])||!s.upgrades||!Object.entries(UPGRADES).every(([k,v])=>Number.isInteger(s.upgrades[k])&&s.upgrades[k]>=0&&s.upgrades[k]<=v.max))throw Error('Повреждено сохранение кампании');
     if(s.battle&&(!s.battle.s||s.battle.s.length!==2||!s.battle.s.every(p=>Number.isFinite(p.hp)&&p.hp>=0&&Number.isFinite(p.energy))||!s.objects.some(o=>o.key===s.battle.key)))throw Error('Повреждено состояние боя');
-    const c=Object.assign(Object.create(Campaign.prototype),s);if(c.chapter==='archive'&&!c.completed('copper'))throw Error('Закрытый район');c.reveal(false);return c;
+    const c=Object.assign(Object.create(Campaign.prototype),s);if(!c.unlocked(c.chapter))throw Error('Закрытый район');c.reveal(false);return c;
   }
 }
 function validateDistrict(s,id=s.chapter||'copper'){
   if(s.map?.n!==25||s.map.cells?.length!==625||!s.map.cells.every(v=>[0,1,3,5].includes(v))||!Number.isInteger(s.position)||!s.map.cells[s.position]||!Array.isArray(s.objects)||s.objects.length<9||s.objects.length>12||!s.objects.every(o=>Number.isInteger(o.id)&&s.map.cells[o.id]&&typeof o.key==='string')||new Set(s.objects.map(o=>o.id)).size!==s.objects.length||new Set(s.objects.map(o=>o.key)).size!==s.objects.length||!['explored','visited'].every(k=>s[k]?.length===625&&s[k].every(v=>typeof v==='boolean'))||!s.flags||!Array.isArray(s.done)||!Array.isArray(s.route)||s.route.some(i=>!Number.isInteger(i)||!s.map.cells[i])||s.companion!==null&&!s.map.cells[s.companion])throw Error('Повреждено состояние района');
+  if(id==='gardens'){
+    const f=s.flags;
+    if(![null,'cold','warm'].includes(f.light)||![null,'lada','driver'].includes(f.keeper)||![null,'share','seeds'].includes(f.tomato)||
+      !s.map.cells[f.trainPosition]||f.boarding!==null&&(!Array.isArray(f.boarding)||f.boarding.some(n=>!Number.isInteger(n)||!s.map.cells[n])))throw Error('Повреждено сохранение Садов');
+  }
   if(id==='archive'&&(!Array.isArray(s.flags.pumps)||s.flags.pumps.some(k=>!['pump-west','pump-east'].includes(k))||new Set(s.flags.pumps).size!==s.flags.pumps.length||![null,'drain','seal'].includes(s.flags.water)))throw Error('Повреждены насосы');
 }

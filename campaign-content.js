@@ -1,8 +1,10 @@
+import {makeGardens} from './garden-district.js';
 import {generate, search} from './engine.js';
 
 export const DISTRICTS={
   copper:{name:'Медный узел',number:'01',passenger:'Илья',boss:'Диспетчер',seed:'LAST-ROUTE-COPPER-1'},
   archive:{name:'Затопленный архив',number:'02',passenger:'Мира',boss:'Смотритель',seed:'LAST-ROUTE-ARCHIVE-7'},
+  gardens:{name:'Сады без солнца',number:'03',passenger:'Лада',boss:'Садовник'},
 };
 export const UPGRADES={
   hull:{name:'Жилой вагон',detail:'+20 к максимальному здоровью',cost:12,glyph:'heart',max:2},
@@ -10,6 +12,11 @@ export const UPGRADES={
   plating:{name:'Защитная обшивка',detail:'+1 к броне',cost:16,glyph:'guard',max:2},
 };
 export const EVIDENCE={
+  gardenLoop:{title:'Ложечка в стакане',source:'Передатчик Садов',text:'Два одинаковых звона разделяют одну и ту же фразу. Когда вентиляция остановилась, стало слышно шуршание магнитной ленты.'},
+  gardenBoxes:{title:'Обратно',source:'Опись ночной смены',text:'На шесть человек выписано семь ящиков. В последней строке вместо имени — слово «обратно».'},
+  gardenSlices:{title:'Шесть ломтиков',source:'Столовая',text:'Лада разделила последний помидор на шестерых. Даже на самом тонком ломтике осталось семечко.'},
+  gardenSeeds:{title:'Письмо следующей смене',source:'Конверт',text:'Семена уцелели. На конверте Лада оставила место для даты первого солнечного дня.'},
+  gardenAddress:{title:'Право приёма',source:'Ключ дежурного',text:'Третья часть адреса указывает, чей голос может принять поезд. Шесть человек добрались на борт.'},
   copperOrder:{title:'Закрыть линию',source:'Приказ диспетчерской',text:'Блокировка началась за одиннадцать минут до официальной тревоги. Кто-то уже знал. Или сама блокировка и была началом аварии.'},
   copperRescue:{title:'Открыть линию',source:'Память ремонтного дрона',text:'В тот же час АРИАДНА тайно открыла служебный тоннель для эвакуации. В общем журнале этот маршрут не существует.'},
   archiveConsent:{title:'Добровольное согласие',source:'Бумажный реестр',text:'Жители подписали просьбу запереть район. Подписи разные. Почерк проводника на последней странице похож на твой — но ты здесь впервые.'},
@@ -43,6 +50,7 @@ export function addOptionalSignals(state,district){
   }
 }
 export function makeDistrict(district){
+  if(district==='gardens')return makeGardens();
   const map=generate(DISTRICTS[district].seed,25),raw=map.objects;
   const archive=district==='archive';
   const objects=archive?[

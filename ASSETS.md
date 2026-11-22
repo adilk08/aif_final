@@ -32,3 +32,11 @@
 Портрет Миры: `assets/portraits/mira.png`, оригинальная вымышленная героиня, built-in image generation / generate / stylized-concept. Изображение проверено визуально и скопировано в проект без обработки из `C:/Users/Lenovo/.codex/generated_images/01a1a8b5-c715-7322-9929-e9393c6668fc/exec-f3d02951-0f32-450e-8aca-5a0f0b40f2d6.png`. Промпт:
 
 Use case: stylized-concept. Asset type: character dialogue portrait for the browser RPG Last Route. Generate an original fictional woman, Mira, about 35, an archivist and field medic in a drowned retrofuturist city. Head and shoulders, close-up with entire head visible, facing slightly right but looking at the viewer with intelligence, exhaustion and reserved empathy. Short dark brown bob, thin round brass eyeglasses, subtle freckles, a weathered slate-blue raincoat and faded lavender scarf, a small paper notebook tucked at the chest. Beautiful detailed hand-painted narrative RPG concept art, confident irregular brushwork, graphic ink-like edges, believable face and anatomy, painterly realism rather than photo or vector. Warm amber rim light left, cool blue rim light right, rich dark midnight navy plain background. Eyes and facial expression clearly readable at thumbnail size. Square canvas. No words, logos, badges, text, watermarks or frame. No similarity to a real person.
+
+## Графика внутреннего комплекса
+
+В каталоге `assets/sector/` находятся 35 изображений WebP для поезда, двух районов, карт действий, бойцов и карты местности. Сцены и наборы оригинальных иллюстраций созданы с помощью ImageGen для этой игры. Изображения нарезаны и сжаты локально.
+
+В `assets/duel/` находятся шесть оригинальных профильных портретов и фон технического отсека, созданные ImageGen. Модуль `duel.js` строит по силуэтам рельефные двусторонние сетки с текстурами, деформирует голову и плечи в WebGL и показывает портреты при отсутствии WebGL.
+
+В Садах 22 реплики перезаписаны выбранными голосами HeyGen на русском. Лада — Galina (13), Мира — Joanna (7), АРИАДНА — Antonia (2). Голос Лады на плёнке проходит полосовой фильтр, после реплики слышен двойной звон. При вызове поезда и в ответе следующего района проигрывается один и тот же файл выбранного дежурного.
